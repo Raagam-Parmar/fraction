@@ -1,10 +1,18 @@
+(** {1 Fraction Type} *)
+
 (** The fraction type, which is either:
     - a valid fraction, with non-zero denominator
     - positive infinity
     - negative infinity
-    - not a number (the indeterminate [0]/[0] form)
+    - not a number (the indeterminate forms, like [0]/[0])
 *)
 type t
+
+(** This exception is raised whenever an attempt is made to reduce
+    an indeterminate fraction into another type which does not
+    support indeterminate forms.
+*)
+exception NaN
 
 (** Positive infinity
 *)
@@ -50,24 +58,24 @@ val of_tuple : int * int -> t
 
 (** [to_int f] is the integer part of [f].
 
-    @raise Division_by_zero if [f] is infinity.
-    @raise NaN if [f] is not a number.
+    @raise Stdlib.Division_by_zero If [f] is infinity.
+    @raise NaN If [f] is not a number.
 *)
 val to_int : t -> int
 
 (** [to_tuple f] converts the fraction [f] into a tuple,
     with the first value being the numerator and second being the denominator.
     
-    @raise Division_by_zero if [f] is infinity.
-    @raise NaN if [f] is not a number.
+    @raise Stdlib.Division_by_zero If [f] is infinity.
+    @raise NaN If [f] is not a number.
 *)
 val to_tuple : t -> int * int
 
 (** [to_float f] converts the fraction [f] into a float.
-    It does not raise. It converts
-    - {!infinity} into {!Float.infinity}
-    - {!neg_infinity} into {!Float.neg_infinity}
-    - {!nan} into {!Float.nan}
+    It does not raise. It converts 
+    - {!infinity} into {!Stdlib.Float.infinity}
+    - {!neg_infinity} into {!Stdlib.Float.neg_infinity}
+    - {!nan} into {!Stdlib.Float.nan}
 *)
 val to_float : t -> Float.t
 
@@ -89,19 +97,19 @@ val minus_one : t
 
 (** {1 Reduction} *)
 
-(** [reduce f] reduces [f] to its lowest representation.
+(** [reduce f] reduces [f] to its lowest fractional representation.
 *)
 val reduce : t -> t
 
-(** [reduce_strict f] reduces [f] only if it is a finite fraction.
+(** [reduce_strict f] reduces [f] if it is a finite fraction.
 
-    @raise Division_by_zero if [f] is infinity.
-    @raise NaN if [f] is not a number.
+    @raise Stdlib.Division_by_zero If [f] is infinity.
+    @raise NaN If [f] is not a number.
 *)
 val reduce_strict : t -> t
 
-(** [reduce_strict_opt f] reduces [f] only if it is a finite fraction.
-    It is [None] if [f] is not a finite fraction.
+(** [reduce_strict_opt f] reduces [f] if it is a finite fraction.
+    It returns [None] otherwise.
 *)
 val reduce_strict_opt : t -> t option
 
@@ -136,6 +144,33 @@ val sign : t -> string
 *)
 val sign_no_plus : t -> string
 
+(** [min f1 f2] is the minimum of [f1] and [f2]. It returns {!nan}
+    whenever either [f1] or [f1] are {!nan}.
+*)
+val min : t -> t -> t
+
+(** [max f1 f2] returns the maximum of [f1] and [f2]. It returns {!nan}
+    whenever either [f1] or [f1] are {!nan}.
+*)
+val max : t -> t -> t
+
+(** [min_max f1 f2] is [(]{!min}[ f1 f2, ]{!max}[ f1 f2)].
+*)
+val min_max : t -> t -> t * t
+
+(** [min_num f1 f2] returns the minimum of [f1] and [f2] treating {!nan} as missing values.
+    If both [f1] and [f2] are {!nan}, {!nan} is returned.
+*)
+val min_num : t -> t -> t
+
+(** [max_num f1 f2] returns the maximum of [f1] and [f2] treating {!nan} as missing values.
+    If both [f1] and [f2] are {!nan}, {!nan} is returned.
+*)
+val max_num : t -> t -> t
+
+(** [min_max_num f1 f2] is [(]{!min_num}[ f1 f2, ]{!max_num}[ f1 f2)].
+*)
+val min_max_num : t -> t -> t * t
 
 (** {1 Arithmetic Operations} *)
 
@@ -168,7 +203,7 @@ val div : t -> t -> t
 
 (** [pretty f] is the pretty print of [f].
     - If [f] is {!zero}, then it displays a ["+0"].
-    - If [f] is {!is_int}, then it displays the integer, preceded by its sign.
+    - If [f] is {!is_integer}, then it displays the integer, preceded by its sign.
     - If [f] is finite, then it displats the fraction, preceded by its sign.
     - If [f] is positive infinity, then it displays ["infinity"]
     - If [f] is negative infinity, then it displays ["neg_infinity"]
@@ -184,6 +219,6 @@ val pretty_no_plus : t -> string
 *)
 val pretty_unsigned : t -> string
 
-(** [pp fmt f] is a custom printer for the fraction type, and can be used with {!Format.printf}.
+(** [pp fmt f] is a custom printer for the fraction type, and can be used with {!Stdlib.Format.printf}.
 *)
 val pp : Format.formatter -> t -> unit

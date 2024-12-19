@@ -137,33 +137,6 @@ let reduce_strict_opt f =
 
 (** Comparison *)
 
-let equal f1 f2 = 
-    match (f1, f2) with
-    | (Fraction f1', Fraction f2') ->
-        if f1'.numerator = 0 && f2'.numerator = 0 then true
-        else 
-            let n1 = f1'.numerator * f2'.denominator in
-            let n2 = f1'.denominator * f2'.numerator in
-            n1 = n2
-    | (Fraction _, Infinity)       -> false
-    | (Fraction _, Neg_infinity)   -> false
-    | (Fraction _, Not_a_number)   -> false
-
-    | (Infinity, Fraction _)       -> false
-    | (Infinity, Infinity)         -> true
-    | (Infinity, Neg_infinity)     -> false
-    | (Infinity, Not_a_number)     -> false
-    
-    | (Neg_infinity, Fraction _)   -> false
-    | (Neg_infinity, Infinity)     -> false
-    | (Neg_infinity, Neg_infinity) -> true
-    | (Neg_infinity, Not_a_number) -> false
-
-    | (Not_a_number, Fraction _)   -> false
-    | (Not_a_number, Infinity)     -> false
-    | (Not_a_number, Neg_infinity) -> false
-    | (Not_a_number, Not_a_number) -> true
-
 let compare f1 f2 = 
     match (f1, f2) with
     | (Fraction f1', Fraction f2') ->
@@ -190,6 +163,10 @@ let compare f1 f2 =
     | (Not_a_number, Infinity)     -> -1
     | (Not_a_number, Neg_infinity) -> -1
     | (Not_a_number, Not_a_number) -> 0   
+
+let equal f1 f2 = 
+    let cmp = compare f1 f2 in
+    cmp = 0
 
 let sigfrac f = 
     compare f (of_int 0)
@@ -296,6 +273,38 @@ let add f1 f2 =
 let sub f1 f2 = 
     add f1 (negate f2)
 
+
+(** Comparison *)
+
+let min f1 f2 = 
+    match (f1, f2) with
+    | (Not_a_number, _) -> Not_a_number
+    | (_, Not_a_number) -> Not_a_number
+    | _                 ->
+        let cmp = compare f1 f2 in
+            if cmp < 0 then f1
+            else f2
+
+let max f1 f2 = 
+    negate (min (negate f1) (negate f2))
+
+let min_max f1 f2 = (min f1 f2, max f1 f2)
+
+let min_num f1 f2 = 
+    match (f1, f2) with
+    | (Not_a_number, Not_a_number) -> Not_a_number
+    | (Not_a_number, _)            -> f2
+    | (_, Not_a_number)            -> f1
+    | _                            -> min f1 f2
+
+let max_num f1 f2 = 
+    match (f1, f2) with
+    | (Not_a_number, Not_a_number) -> Not_a_number
+    | (Not_a_number, _)            -> f2
+    | (_, Not_a_number)            -> f1
+    | _                            -> max f1 f2
+
+let min_max_num f1 f2 = (min_num f1 f2, max_num f1 f2)
 
 (** Pretty Printer *)
     
