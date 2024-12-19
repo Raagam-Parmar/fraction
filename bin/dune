@@ -1,0 +1,4 @@
+(executable
+ (public_name fraction)
+ (name main)
+ (libraries fraction))
